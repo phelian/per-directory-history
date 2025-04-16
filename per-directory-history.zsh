@@ -16,6 +16,9 @@
 # HISTORY_BASE a global variable that defines the base directory in which the
 # directory histories are stored
 #
+# PER_DIRECTORY_HISTORY_SHARED_PATHS an array of paths that share history
+# with its subfolders.
+#
 #-------------------------------------------------------------------------------
 # History
 #-------------------------------------------------------------------------------
@@ -59,6 +62,7 @@
 [[ -z $HISTORY_BASE ]] && HISTORY_BASE="$HOME/.directory_history"
 [[ -z $HISTORY_START_WITH_GLOBAL ]] && HISTORY_START_WITH_GLOBAL=false
 [[ -z $PER_DIRECTORY_HISTORY_TOGGLE ]] && PER_DIRECTORY_HISTORY_TOGGLE='^G'
+typeset -ga PER_DIRECTORY_HISTORY_SHARED_PATHS
 
 #-------------------------------------------------------------------------------
 # toggle global/directory history used for searching - ctrl-G by default
@@ -87,10 +91,30 @@ bindkey -M vicmd $PER_DIRECTORY_HISTORY_TOGGLE per-directory-history-toggle-hist
 # implementation details
 #-------------------------------------------------------------------------------
 
-_per_directory_history_directory="$HISTORY_BASE${PWD:A}/history"
+function _per-directory-history-get-history-path() {
+  local dir base match
+
+  # Normalize current dir
+  dir=$(realpath "$PWD" 2>/dev/null || echo "$PWD")
+
+  # Check for shared match if the array is set and non-empty
+  if [[ -n ${PER_DIRECTORY_HISTORY_SHARED_PATHS:+set} && ${#PER_DIRECTORY_HISTORY_SHARED_PATHS[@]} -gt 0 ]]; then
+    for base in "${PER_DIRECTORY_HISTORY_SHARED_PATHS[@]}"; do
+      local normalized_base=$(realpath "$base" 2>/dev/null || echo "$base")
+
+      if [[ "$dir" == "$normalized_base" || "$dir" == "$normalized_base/"* ]]; then
+        match=$normalized_base
+        break
+      fi
+    done
+  fi
+
+  local history_key="${match:-$dir}"
+  echo "$HISTORY_BASE/$(echo "$history_key" | tr '/:' '_')/history"
+}
 
 function _per-directory-history-change-directory() {
-  _per_directory_history_directory="$HISTORY_BASE${PWD:A}/history"
+  _per_directory_history_directory="$(_per-directory-history-get-history-path)"
   mkdir -p ${_per_directory_history_directory:h}
   if [[ $_per_directory_history_is_global == false ]]; then
     #save to the global history
@@ -162,6 +186,8 @@ function _per-directory-history-set-global-history() {
     fc -R "$HISTFILE"
   fi
 }
+
+_per_directory_history_directory="$(_per-directory-history-get-history-path)"
 
 mkdir -p ${_per_directory_history_directory:h}
 

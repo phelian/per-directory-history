@@ -37,6 +37,14 @@ Configuration
 * HISTORY_BASE a global variable that defines the base directory in which the 
   directory histories are stored
 * per-directory-history-toggle-history is the function to toggle the history
+* PER_DIRECTORY_HISTORY_SHARED_PATHS can be set to group folders with its
+  subfolders history file. 
+  ```shell
+    typeset -ga PER_DIRECTORY_HISTORY_SHARED_PATHS=(
+        "/foo"
+        "/bar"
+    )
+  ```
 
 -------------------------------------------------------------------------------
 History
