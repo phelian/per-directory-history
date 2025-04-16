@@ -93,13 +93,11 @@ bindkey -M vicmd $PER_DIRECTORY_HISTORY_TOGGLE per-directory-history-toggle-hist
 #-------------------------------------------------------------------------------
 
 function _per-directory-history-get-history-path() {
-  local dir base match
+  local dir match
 
-  # Normalize current dir
   dir=$(realpath "$PWD" 2>/dev/null || echo "$PWD")
 
-  # Check for shared match if the array is set and non-empty
-  if [[ -n ${PER_DIRECTORY_HISTORY_SHARED_PATHS:+set} && ${#PER_DIRECTORY_HISTORY_SHARED_PATHS[@]} -gt 0 ]]; then
+  if [[ ${#PER_DIRECTORY_HISTORY_SHARED_PATHS[@]} -gt 0 ]]; then
     for base in "${PER_DIRECTORY_HISTORY_SHARED_PATHS[@]}"; do
       local normalized_base=$(realpath "$base" 2>/dev/null || echo "$base")
 
@@ -126,7 +124,7 @@ function _per-directory-history-change-directory() {
     #save to the global history
     fc -AI $HISTFILE
     #save history to previous file
-    local prev="$HISTORY_BASE${OLDPWD:A}/history"
+    local prev="$(_per-directory-history-get-history-path)"
     mkdir -p ${prev:h}
     fc -AI $prev
 
