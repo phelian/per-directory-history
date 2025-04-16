@@ -62,6 +62,7 @@
 [[ -z $HISTORY_BASE ]] && HISTORY_BASE="$HOME/.directory_history"
 [[ -z $HISTORY_START_WITH_GLOBAL ]] && HISTORY_START_WITH_GLOBAL=false
 [[ -z $PER_DIRECTORY_HISTORY_TOGGLE ]] && PER_DIRECTORY_HISTORY_TOGGLE='^G'
+PER_DIRECTORY_HISTORY_DEBUG=${PER_DIRECTORY_HISTORY_DEBUG:-""}
 typeset -ga PER_DIRECTORY_HISTORY_SHARED_PATHS
 
 #-------------------------------------------------------------------------------
@@ -102,6 +103,8 @@ function _per-directory-history-get-history-path() {
     for base in "${PER_DIRECTORY_HISTORY_SHARED_PATHS[@]}"; do
       local normalized_base=$(realpath "$base" 2>/dev/null || echo "$base")
 
+      [[ -n $PER_DIRECTORY_HISTORY_DEBUG ]] && echo "[per-dir-history] checking: $dir vs $normalized_base" >&2
+
       if [[ "$dir" == "$normalized_base" || "$dir" == "$normalized_base/"* ]]; then
         match=$normalized_base
         break
@@ -110,6 +113,9 @@ function _per-directory-history-get-history-path() {
   fi
 
   local history_key="${match:-$dir}"
+
+  [[ -n $PER_DIRECTORY_HISTORY_DEBUG ]] && echo "[per-dir-history] using history key: $history_key" >&2
+
   echo "$HISTORY_BASE/$(echo "$history_key" | tr '/:' '_')/history"
 }
 
